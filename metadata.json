@@ -1,0 +1,7 @@
+{
+  "name": "PDF Master Toolkit",
+  "description": "A secure, browser-only PDF utility for splitting, merging, and signing documents without server-side storage.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

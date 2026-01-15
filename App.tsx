@@ -49,7 +49,7 @@ const App: React.FC = () => {
               <FileText className="text-white w-5 h-5" />
             </div>
             <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-              PDF Master
+              BasicPDF
             </h1>
           </div>
           <div className="hidden sm:flex items-center gap-6 text-sm font-medium text-slate-500">
@@ -71,7 +71,7 @@ const App: React.FC = () => {
 
       <footer className="bg-white border-t border-slate-200 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center text-slate-400 text-sm">
-          <p>© {new Date().getFullYear()} PDF Master Toolkit. Todos los archivos se procesan en tu navegador.</p>
+          <p>© {new Date().getFullYear()} BasicPDF Toolkit. Todos los archivos se procesan en tu navegador.</p>
         </div>
       </footer>
     </div>

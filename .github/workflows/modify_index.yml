@@ -1,0 +1,39 @@
+name: Inyectar Script y Auto-Commit
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Esto permite ejecutarlo manualmente si quieres probar
+
+permissions:
+  contents: write # Permiso crucial para que el bot pueda subir cambios al repo
+
+jobs:
+  modify-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Descarga el código
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Necesario para poder hacer push después
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Modifica el HTML (Añade el script debajo del div root)
+      - name: Modify HTML file
+        run: |
+          sed -i '/<div id="root"><\/div>/a \    <script type="module" src="index.tsx"></script>' index.html
+
+      # 3. Configura el bot y sube el cambio al repositorio
+      - name: Commit and Push changes
+        run: |
+          # Solo hace commit si hay cambios reales para evitar errores
+          if git diff --exit-code index.html; then
+            echo "No hay cambios que realizar."
+          else
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "chore: auto-inject index.tsx [skip ci]"
+            git push
+          fi

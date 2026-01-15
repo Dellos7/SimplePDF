@@ -130,7 +130,7 @@ const Dashboard: React.FC<{ onSelectTool: (tool: Tool) => void }> = ({ onSelectT
           Herramientas privadas para tus PDF
         </h2>
         <p className="max-w-2xl mx-auto text-xl text-slate-500 leading-relaxed">
-          Herramientas potentes que se ejecutan en tu navegador. Tus documentos nunca suben a la nube.
+          Utilidades para PDF que además son 100% privadas. Se ejecutan solo en tu navegador.
         </p>
       </div>
 

@@ -1,6 +1,6 @@
 {
   "name": "BasicPDF Toolkit",
-  "description": "A secure, browser-only PDF utility for splitting, merging, and signing documents without server-side storage.",
+  "description": "A secure, browser-only PDF utility for splitting, merging, and signing documents. Features official AutoFirma integration for legal digital signatures.",
   "requestFramePermissions": [
     "camera"
   ]

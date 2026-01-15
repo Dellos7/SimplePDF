@@ -265,14 +265,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 px-4 pb-12">
-      <button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-800 transition-colors font-medium">
+    <div className="max-w-6xl mx-auto space-y-6 px-4 pb-12 transition-colors">
+      <button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors font-medium">
         <ChevronLeft className="w-5 h-5 mr-1" /> Volver al Panel
       </button>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden min-h-[500px] flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden min-h-[500px] flex flex-col transition-colors">
         {/* Header Steps */}
-        <div className="bg-slate-50 px-4 md:px-8 py-6 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div className="bg-slate-50 dark:bg-slate-950 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex flex-wrap justify-between items-center gap-4 transition-colors">
           <div className="flex items-center gap-4 md:gap-8 overflow-x-auto no-scrollbar py-2">
             <StepIndicator active={step === 'upload'} completed={!!file} label="1. Subir" />
             <StepIndicator active={step === 'draw'} completed={!!signatureUrl} label="2. Firma" />
@@ -280,7 +280,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
             <StepIndicator active={step === 'placement'} completed={false} label="4. Posición" />
           </div>
           {file && (
-            <button onClick={() => { setFile(null); setSignatureUrl(null); setStep('upload'); setSelectedPages([]); setPlacements({}); setPagePreviews({}); }} className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors">
+            <button onClick={() => { setFile(null); setSignatureUrl(null); setStep('upload'); setSelectedPages([]); setPlacements({}); setPagePreviews({}); }} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors">
               <Trash2 className="w-4 h-4" /> Reiniciar
             </button>
           )}
@@ -290,23 +290,23 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
         <div className="flex-grow flex flex-col">
           {step === 'upload' && (
             <div className="p-10 md:p-16 flex flex-col items-center justify-center text-center space-y-6">
-              <div onClick={() => fileInputRef.current?.click()} className="w-full max-w-md border-4 border-dashed border-slate-200 rounded-3xl p-10 md:p-12 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+              <div onClick={() => fileInputRef.current?.click()} className="w-full max-w-md border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-10 md:p-12 cursor-pointer hover:border-blue-400 dark:hover:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all group">
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf" />
-                <div className="bg-blue-100 text-blue-600 p-6 rounded-2xl w-fit mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <div className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-6 rounded-2xl w-fit mx-auto mb-6 group-hover:scale-110 transition-transform">
                   <Upload className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800">Cargar Documento</h3>
-                <p className="text-slate-500 mt-2">Selecciona el PDF que deseas firmar</p>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Cargar Documento</h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-2">Selecciona el PDF que deseas firmar</p>
               </div>
             </div>
           )}
 
           {step === 'draw' && (
             <div className="p-6 md:p-12 flex flex-col items-center animate-in fade-in zoom-in duration-300">
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">Dibuja tu firma</h2>
-              <p className="text-slate-500 mb-8 text-center text-sm">Utiliza el ratón o el dedo para firmar. <br className="md:hidden"/> El fondo será blanco por defecto para visibilidad.</p>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Dibuja tu firma</h2>
+              <p className="text-slate-500 dark:text-slate-400 mb-8 text-center text-sm">Utiliza el ratón o el dedo para firmar. <br className="md:hidden"/> El fondo será siempre blanco en el documento final.</p>
               
-              <div className="relative bg-white border-4 border-slate-200 rounded-2xl shadow-inner overflow-hidden max-w-full">
+              <div className="relative bg-white border-4 border-slate-200 dark:border-slate-800 rounded-2xl shadow-inner overflow-hidden max-w-full transition-colors">
                 <canvas
                   ref={canvasRef} 
                   width={window.innerWidth < 640 ? 300 : 600} 
@@ -325,6 +325,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                   onMouseUp={() => setIsDrawing(false)}
                   onMouseOut={() => setIsDrawing(false)}
                   onMouseMove={draw}
+                  // Fix: Property 'top' does not exist on type 'Touch'. Corrected to 'clientY - rect.top'.
                   onTouchStart={(e) => { 
                     setIsDrawing(true); 
                     if (canvasRef.current) {
@@ -340,14 +341,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                   onTouchMove={draw}
                   className="touch-none cursor-crosshair bg-white"
                 />
-                <button onClick={() => { const ctx = canvasRef.current?.getContext('2d'); if (ctx) { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,600,300); ctx.beginPath(); } }} className="absolute bottom-4 right-4 bg-white border border-slate-200 p-3 rounded-xl hover:bg-slate-50 shadow-sm transition-colors">
-                  <Eraser className="w-6 h-6 text-slate-500" />
+                <button onClick={() => { const ctx = canvasRef.current?.getContext('2d'); if (ctx) { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,600,300); ctx.beginPath(); } }} className="absolute bottom-4 right-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition-colors">
+                  <Eraser className="w-6 h-6 text-slate-500 dark:text-slate-400" />
                 </button>
               </div>
 
               <div className="mt-12 flex gap-4 w-full justify-center">
-                <button onClick={() => setStep('upload')} className="px-8 py-3 font-bold text-slate-500 hover:text-slate-800 transition-colors">Atrás</button>
-                <button onClick={saveSignature} className="bg-blue-600 text-white px-12 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Continuar</button>
+                <button onClick={() => setStep('upload')} className="px-8 py-3 font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Atrás</button>
+                <button onClick={saveSignature} className="bg-blue-600 text-white px-12 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-700 transition-all">Continuar</button>
               </div>
             </div>
           )}
@@ -356,13 +357,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
             <div className="p-6 md:p-12 flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
               <div className="max-w-5xl mx-auto w-full space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-bold text-slate-800">¿En qué páginas quieres firmar?</h2>
-                  <p className="text-slate-500 text-sm">Selecciona las páginas donde aparecerá tu rúbrica.</p>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">¿En qué páginas quieres firmar?</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">Selecciona las páginas donde aparecerá tu rúbrica.</p>
                 </div>
 
                 <div className="flex gap-4 justify-center">
-                  <button onClick={() => setSelectedPages(Array.from({length: pageCount}, (_, i) => i))} className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors">Todas</button>
-                  <button onClick={() => setSelectedPages([])} className="text-xs font-bold text-slate-500 bg-slate-50 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors">Ninguna</button>
+                  <button onClick={() => setSelectedPages(Array.from({length: pageCount}, (_, i) => i))} className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-4 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">Todas</button>
+                  <button onClick={() => setSelectedPages([])} className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Ninguna</button>
                 </div>
 
                 {isLoadingPreviews ? (
@@ -371,20 +372,20 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                     <p className="font-medium animate-pulse">Cargando páginas...</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[450px] overflow-y-auto p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-inner">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[450px] overflow-y-auto p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
                     {thumbnails.map((src, i) => (
                       <div
                         key={i}
                         onClick={() => setSelectedPages(prev => prev.includes(i) ? prev.filter(p => p !== i) : [...prev, i].sort((a,b)=>a-b))}
-                        className={`group relative cursor-pointer rounded-xl border-4 transition-all overflow-hidden bg-white ${
+                        className={`group relative cursor-pointer rounded-xl border-4 transition-all overflow-hidden bg-white dark:bg-slate-900 ${
                           selectedPages.includes(i) 
-                            ? 'border-blue-500 shadow-md ring-2 ring-blue-200' 
-                            : 'border-white hover:border-slate-200'
+                            ? 'border-blue-500 shadow-md ring-2 ring-blue-200 dark:ring-blue-900/50' 
+                            : 'border-white dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
                         }`}
                       >
                         <img src={src} alt={`Página ${i+1}`} className="w-full h-auto block select-none" />
                         <div className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm transition-colors ${
-                          selectedPages.includes(i) ? 'bg-blue-600 text-white' : 'bg-white/80 text-slate-700'
+                          selectedPages.includes(i) ? 'bg-blue-600 text-white' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200'
                         }`}>
                           {i + 1}
                         </div>
@@ -399,7 +400,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                 )}
 
                 <div className="flex justify-center pt-8">
-                  <button disabled={selectedPages.length === 0} onClick={goToPlacement} className="bg-blue-600 text-white w-full max-w-sm py-4 rounded-2xl font-bold shadow-xl shadow-blue-200 hover:bg-blue-700 disabled:bg-slate-200 disabled:shadow-none transition-all flex items-center justify-center gap-2">
+                  <button disabled={selectedPages.length === 0} onClick={goToPlacement} className="bg-blue-600 text-white w-full max-w-sm py-4 rounded-2xl font-bold shadow-xl shadow-blue-200 dark:shadow-none hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:shadow-none transition-all flex items-center justify-center gap-2">
                     {isProcessing ? <Loader2 className="animate-spin w-5 h-5" /> : <Move className="w-5 h-5" />}
                     Confirmar y Posicionar
                   </button>
@@ -410,42 +411,42 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
 
           {step === 'placement' && (
             <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-300">
-              <div className="bg-slate-50 px-4 md:px-8 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10">
+              <div className="bg-slate-50 dark:bg-slate-950 px-4 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10 transition-colors">
                 <div className="flex flex-wrap items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <div className="relative">
                       <input type="checkbox" checked={samePositionForAll} onChange={() => setSamePositionForAll(!samePositionForAll)} className="sr-only peer" />
-                      <div className="w-10 h-5 bg-slate-300 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
+                      <div className="w-10 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
                       <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
                     </div>
-                    <span className="font-bold text-slate-700 text-xs">Misma posición</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">Misma posición</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <div className="relative">
                       <input type="checkbox" checked={downloadOnlySigned} onChange={() => setDownloadOnlySigned(!downloadOnlySigned)} className="sr-only peer" />
-                      <div className="w-10 h-5 bg-slate-300 rounded-full peer-checked:bg-purple-600 transition-colors"></div>
+                      <div className="w-10 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer-checked:bg-purple-600 transition-colors"></div>
                       <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
                     </div>
-                    <span className="font-bold text-slate-700 text-xs">Solo firmadas</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">Solo firmadas</span>
                   </label>
                 </div>
-                <button onClick={handleSign} disabled={isProcessing} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-green-100 hover:bg-green-700 flex items-center gap-2 transition-all text-sm w-full md:w-auto justify-center">
+                <button onClick={handleSign} disabled={isProcessing} className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-green-100 dark:shadow-none hover:bg-green-700 flex items-center gap-2 transition-all text-sm w-full md:w-auto justify-center">
                   {isProcessing ? <Loader2 className="animate-spin w-4 h-4" /> : <Download className="w-4 h-4" />}
                   Finalizar PDF
                 </button>
               </div>
 
-              <div className="flex-grow overflow-y-auto overflow-x-hidden p-4 md:p-8 bg-slate-100 flex flex-col items-center gap-12 min-h-[400px]">
-                <div className="max-w-md text-center bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm md:hidden mb-4">
-                  <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest flex items-center gap-2 justify-center">
-                    <Maximize2 className="w-3 h-3" /> Toca y arrastra la firma
+              <div className="flex-grow overflow-y-auto p-4 md:p-8 bg-slate-100 dark:bg-slate-950 flex flex-col items-center gap-8 min-h-[400px] transition-colors">
+                <div className="max-w-md text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-2xl shadow-sm md:hidden mb-4 transition-colors">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2 justify-center">
+                    <Maximize2 className="w-3 h-3" /> Arrastra para situar la firma
                   </p>
                 </div>
 
                 {isProcessing && Object.keys(pagePreviews).length < (samePositionForAll ? 1 : selectedPages.length) && (
                   <div className="flex flex-col items-center gap-4 py-20">
                     <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-                    <p className="text-slate-500 font-medium">Cargando previsualización...</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Cargando previsualización...</p>
                   </div>
                 )}
                 
@@ -456,18 +457,18 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
 
                   return (
                     <div key={pIdx} className="flex flex-col items-center gap-4 w-full max-w-full">
-                      <span className="bg-white px-4 py-1.5 rounded-full text-[10px] font-black text-slate-500 shadow-sm border border-slate-200 uppercase tracking-widest">
+                      <span className="bg-white dark:bg-slate-900 px-4 py-1.5 rounded-full text-[10px] font-black text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-slate-800 uppercase tracking-widest">
                         Página {pIdx + 1} {samePositionForAll && selectedPages.length > 1 && `(Patrón)`}
                       </span>
                       
-                      <div className="w-full flex justify-center bg-slate-300/20 p-4 rounded-3xl border border-dashed border-slate-300 shadow-inner">
+                      <div className="w-full flex justify-center items-start">
                         <div
                           ref={el => { containersRef.current[pIdx] = el; }}
                           onMouseMove={(e) => handlePlacementMove(e, pIdx)}
                           onMouseUp={() => setActiveDraggingIdx(null)}
                           onTouchMove={(e) => handlePlacementMove(e, pIdx)}
                           onTouchEnd={() => setActiveDraggingIdx(null)}
-                          className="relative shadow-2xl bg-white border-4 border-white select-none touch-none mx-auto"
+                          className="relative shadow-2xl bg-white border-4 border-white select-none touch-none mx-auto overflow-hidden rounded-sm"
                           style={{ 
                             width: '100%',
                             maxWidth: `${preview.width}px`,
@@ -509,11 +510,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
 };
 
 const StepIndicator: React.FC<{ active: boolean; completed: boolean; label: string }> = ({ active, completed, label }) => (
-  <div className={`flex items-center gap-2 transition-colors shrink-0 ${active ? 'text-blue-600' : completed ? 'text-green-600' : 'text-slate-400'}`}>
+  <div className={`flex items-center gap-2 transition-colors shrink-0 ${active ? 'text-blue-600 dark:text-blue-400' : completed ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-600'}`}>
     <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all ${
-      active ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-100' : 
+      active ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-100 dark:shadow-none' : 
       completed ? 'bg-green-500 border-green-500 text-white' : 
-      'bg-transparent border-slate-200'
+      'bg-transparent border-slate-200 dark:border-slate-800'
     }`}>
       {completed ? <Check className="w-3 h-3" /> : label.split('.')[0]}
     </div>

@@ -24,15 +24,13 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
     setIsLoadingPreviews(true);
     const previewsArray: string[] = [];
     try {
-      // IMPORTANTE: Usamos una copia del buffer (.slice(0)) porque PDF.js puede "desvincular" (detach) 
-      // el ArrayBuffer al transferirlo al worker por rendimiento.
       const bufferCopy = buffer.slice(0);
       const loadingTask = pdfjsLib.getDocument({ data: bufferCopy });
       const pdf = await loadingTask.promise;
       
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 0.3 }); // Escala baja para miniaturas
+        const viewport = page.getViewport({ scale: 0.3 });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
@@ -40,7 +38,6 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
           canvas.height = viewport.height;
           canvas.width = viewport.width;
           
-          // Fix: Add required 'canvas' property to satisfy type definitions in pdfjs-dist 4.x
           await page.render({
             canvasContext: context,
             viewport: viewport,
@@ -63,7 +60,6 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
     if (selectedFile && selectedFile.type === 'application/pdf') {
       try {
         const buffer = await selectedFile.arrayBuffer();
-        // Usamos copias para evitar que las librerías desvinculen el buffer principal
         const count = await getPageCount(buffer.slice(0));
         setFile({ name: selectedFile.name, data: buffer });
         setPageCount(count);
@@ -88,7 +84,6 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
     if (!file || selectedPages.length === 0) return;
     setIsProcessing(true);
     try {
-      // Pasamos una copia por seguridad, aunque pdf-lib suele ser menos agresivo que PDF.js
       const result = await splitPdf(file.data.slice(0), selectedPages);
       const blob = new Blob([result], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -109,17 +104,17 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
     <div className="max-w-5xl mx-auto space-y-6">
       <button 
         onClick={onBack}
-        className="flex items-center text-slate-500 hover:text-slate-800 transition-colors font-medium"
+        className="flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors font-medium"
       >
         <ChevronLeft className="w-5 h-5 mr-1" />
         Volver al Panel
       </button>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Separar PDF</h2>
-            <p className="text-slate-500 text-sm">Haz clic en las páginas para seleccionarlas.</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Separar PDF</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Haz clic en las páginas para seleccionarlas.</p>
           </div>
           {file && (
             <button 
@@ -136,7 +131,7 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
           <div className="p-12 text-center">
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-200 rounded-xl p-12 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group"
+              className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-12 cursor-pointer hover:border-blue-400 dark:hover:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all group"
             >
               <input 
                 type="file" 
@@ -145,36 +140,36 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
                 className="hidden" 
                 accept=".pdf"
               />
-              <div className="bg-blue-100 text-blue-600 p-4 rounded-full w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <div className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-4 rounded-full w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
                 <Upload className="w-8 h-8" />
               </div>
-              <p className="text-slate-700 font-semibold text-lg">Sube un PDF para ver sus páginas</p>
-              <p className="text-slate-400 text-sm mt-1">El procesamiento es 100% privado y local</p>
+              <p className="text-slate-700 dark:text-slate-200 font-semibold text-lg transition-colors">Sube un PDF para ver sus páginas</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mt-1 transition-colors">El procesamiento es 100% privado y local</p>
             </div>
           </div>
         ) : (
           <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="bg-blue-600 p-2 rounded-lg shrink-0">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-800 truncate">{file.name}</p>
-                  <p className="text-slate-500 text-xs">{pageCount} páginas totales</p>
+                  <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{file.name}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">{pageCount} páginas totales</p>
                 </div>
               </div>
               
               <div className="flex gap-2 shrink-0">
                 <button 
                   onClick={() => setSelectedPages(Array.from({ length: pageCount }, (_, i) => i))}
-                  className="text-xs font-bold text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 px-3 py-2 rounded-lg transition-colors"
                 >
                   Todas
                 </button>
                 <button 
                   onClick={() => setSelectedPages([])}
-                  className="text-xs font-bold text-slate-500 hover:bg-slate-200 px-3 py-2 rounded-lg transition-colors"
+                  className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors"
                 >
                   Ninguna
                 </button>
@@ -192,10 +187,10 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
                   <div
                     key={i}
                     onClick={() => togglePage(i)}
-                    className={`group relative cursor-pointer rounded-xl border-4 transition-all overflow-hidden bg-slate-100 ${
+                    className={`group relative cursor-pointer rounded-xl border-4 transition-all overflow-hidden bg-slate-100 dark:bg-slate-800 ${
                       selectedPages.includes(i) 
-                        ? 'border-blue-500 shadow-md ring-2 ring-blue-200' 
-                        : 'border-white hover:border-slate-200 shadow-sm'
+                        ? 'border-blue-500 shadow-md ring-2 ring-blue-200 dark:ring-blue-900/50' 
+                        : 'border-white dark:border-slate-900 hover:border-slate-200 dark:hover:border-slate-700 shadow-sm'
                     }`}
                   >
                     <img 
@@ -207,21 +202,17 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
                     <div className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm transition-colors ${
                       selectedPages.includes(i) 
                         ? 'bg-blue-600 text-white' 
-                        : 'bg-white text-slate-700 group-hover:bg-slate-100'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-slate-100 dark:group-hover:bg-slate-700'
                     }`}>
                       {i + 1}
                     </div>
 
                     {selectedPages.includes(i) && (
                       <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
-                        <div className="bg-white rounded-full p-1 shadow-lg">
+                        <div className="bg-white dark:bg-slate-900 rounded-full p-1 shadow-lg">
                           <CheckCircle2 className="w-6 h-6 text-blue-600" />
                         </div>
                       </div>
-                    )}
-                    
-                    {!selectedPages.includes(i) && (
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
                     )}
                   </div>
                 ))}
@@ -234,8 +225,8 @@ const PdfSplitter: React.FC<PdfSplitterProps> = ({ onBack }) => {
                 disabled={selectedPages.length === 0 || isProcessing}
                 className={`flex items-center gap-2 px-10 py-4 rounded-2xl font-bold transition-all shadow-xl hover:-translate-y-0.5 active:translate-y-0 ${
                   selectedPages.length === 0 || isProcessing
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200'
+                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200 dark:hover:shadow-none'
                 }`}
               >
                 {isProcessing ? (

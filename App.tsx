@@ -81,7 +81,7 @@ const App: React.FC = () => {
               <FileText className="text-white w-5 h-5" />
             </div>
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              BasicPDF
+              PrivacyPDF
             </h1>
           </div>
 
@@ -114,7 +114,7 @@ const App: React.FC = () => {
 
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 transition-colors">
         <div className="max-w-7xl mx-auto px-4 text-center text-slate-400 dark:text-slate-500 text-sm">
-          <p>© {new Date().getFullYear()} BasicPDF Toolkit. Procesamiento 100% en local para máxima seguridad. </p>
+          <p>© {new Date().getFullYear()} PrivacyPDF Toolkit. Procesamiento 100% en local para máxima seguridad.</p>
         </div>
       </footer>
     </div>
@@ -165,10 +165,10 @@ const Dashboard: React.FC<{ onSelectTool: (tool: Tool) => void }> = ({ onSelectT
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center space-y-4">
         <h2 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight transition-colors">
-          Las herramientas para PDF que respetan tu privacidad.
+          Herramientas 100% privadas y seguras para tus PDF
         </h2>
         <p className="max-w-2xl mx-auto text-xl text-slate-500 dark:text-slate-400 leading-relaxed transition-colors">
-          Utilidades para PDF que además son 100% privadas. Se ejecutan solo en tu navegador y de forma local. No almacenamos ningún dato tuyo.
+          Totalmente privado y seguro. Tus PDF nunca salen de tu ordenador. No almacenamos ningún dato en nuestros servidores.
         </p>
       </div>
 
@@ -198,7 +198,7 @@ const Dashboard: React.FC<{ onSelectTool: (tool: Tool) => void }> = ({ onSelectT
 
       <div className="bg-blue-600 dark:bg-blue-700 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-blue-200 dark:shadow-none overflow-hidden relative">
         <div className="relative z-10 space-y-2">
-          <h3 className="text-2xl font-bold">¿Por qué usar BasicPDF?</h3>
+          <h3 className="text-2xl font-bold">¿Por qué usar PrivacyPDF?</h3>
           <p className="text-blue-100 max-w-lg">
             A diferencia de otras webs, nosotros no procesamos tus archivos en servidores externos. 
             La seguridad de tus datos está garantizada por el aislamiento de tu propio navegador.

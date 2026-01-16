@@ -1,5 +1,5 @@
 {
-  "name": "BasicPDF Toolkit",
+  "name": "PrivacyPDF Toolkit",
   "description": "A secure, browser-only PDF utility for splitting, merging, and signing documents. Features official AutoFirma integration for legal digital signatures.",
   "requestFramePermissions": [
     "camera"

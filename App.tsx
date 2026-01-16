@@ -114,7 +114,7 @@ const App: React.FC = () => {
 
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 transition-colors">
         <div className="max-w-7xl mx-auto px-4 text-center text-slate-400 dark:text-slate-500 text-sm">
-          <p>© {new Date().getFullYear()} BasicPDF Toolkit. Procesamiento 100% en local para máxima seguridad.</p>
+          <p>© {new Date().getFullYear()} BasicPDF Toolkit. Procesamiento 100% en local para máxima seguridad. </p>
         </div>
       </footer>
     </div>

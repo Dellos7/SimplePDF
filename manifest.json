@@ -3,7 +3,7 @@
   "name": "PrivacyPDF Toolkit",
   "short_name": "PrivacyPDF",
   "description": "Herramienta de PDF segura y totalmente privada, para dividir, fusionar y firmar documentos.",
-  "start_url": "index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",

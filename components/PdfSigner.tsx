@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronLeft, Upload, FileText, Download, PenTool, Eraser, CheckCircle2, Trash2, Loader2, Move, Layout, Check, Maximize2 } from 'lucide-react';
+import { ChevronLeft, Upload, FileText, Download, PenTool, Eraser, CheckCircle2, Trash2, Loader2, Move, Layout, Check, Maximize2, Scale, ArrowDownRight } from 'lucide-react';
 import { signPdf, getPageCount, SignaturePlacement } from '../services/pdfService';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs`;
@@ -36,6 +36,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
   const [isLoadingPreviews, setIsLoadingPreviews] = useState(false);
   const [placements, setPlacements] = useState<Record<number, RectPosition>>({});
   const [activeDraggingIdx, setActiveDraggingIdx] = useState<number | null>(null);
+  const [activeResizingIdx, setActiveResizingIdx] = useState<number | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +49,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
       const loadingTask = pdfjsLib.getDocument({ data: buffer.slice(0) });
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(pageNum);
+      // El viewport de PDF.js ya maneja la rotación automáticamente
       const viewport = page.getViewport({ scale: 1.5 });
       
       const canvas = document.createElement('canvas');
@@ -108,27 +110,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
     }
   }, [step]);
 
-  useEffect(() => {
-    const loadMissing = async () => {
-      if (step === 'placement' && file && !samePositionForAll) {
-        setIsProcessing(true);
-        for (const p of selectedPages) {
-          if (!pagePreviews[p]) {
-            const preview = await loadPagePreview(file.data, p + 1);
-            if (preview && !placements[p]) {
-              setPlacements(prev => ({
-                ...prev,
-                [p]: { x: preview.width / 2 - 75, y: preview.height - 150, width: 150, height: 75 }
-              }));
-            }
-          }
-        }
-        setIsProcessing(false);
-      }
-    };
-    loadMissing();
-  }, [samePositionForAll, step, file, selectedPages, loadPagePreview, pagePreviews, placements]);
-
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing || !canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
@@ -167,9 +148,16 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
     for (const p of pagesToLoad) {
       const preview = await loadPagePreview(file.data, p + 1);
       if (preview && !placements[p]) {
+        const initialWidth = preview.width * 0.25;
+        const initialHeight = initialWidth * 0.5; 
         setPlacements(prev => ({
           ...prev,
-          [p]: { x: preview.width / 2 - 75, y: preview.height - 150, width: 150, height: 75 }
+          [p]: { 
+            x: preview.width / 2 - initialWidth / 2, 
+            y: preview.height - initialHeight - 50, 
+            width: initialWidth, 
+            height: initialHeight 
+          }
         }));
       }
     }
@@ -177,88 +165,108 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
     setStep('placement');
   };
 
-  const handlePlacementMove = (e: React.MouseEvent | React.TouchEvent, pageIdx: number) => {
-    if (activeDraggingIdx !== pageIdx) return;
+  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent, pageIdx: number) => {
+    if (activeDraggingIdx !== pageIdx && activeResizingIdx !== pageIdx) return;
+    
     const container = containersRef.current[pageIdx];
     const preview = pagePreviews[pageIdx];
     const pos = placements[pageIdx];
     if (!container || !preview || !pos) return;
 
     const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
     const scaleFactorX = preview.width / rect.width;
     const scaleFactorY = preview.height / rect.height;
 
-    const x = Math.max(0, Math.min((clientX - rect.left) * scaleFactorX - pos.width / 2, preview.width - pos.width));
-    const y = Math.max(0, Math.min((clientY - rect.top) * scaleFactorY - pos.height / 2, preview.height - pos.height));
-    setPlacements(prev => ({ ...prev, [pageIdx]: { ...pos, x, y } }));
+    const localX = (clientX - rect.left) * scaleFactorX;
+    const localY = (clientY - rect.top) * scaleFactorY;
+
+    if (activeResizingIdx === pageIdx) {
+      const ratio = pos.width / pos.height;
+      const newWidth = Math.max(40, localX - pos.x);
+      const newHeight = newWidth / ratio;
+      
+      if (pos.x + newWidth <= preview.width && pos.y + newHeight <= preview.height) {
+        setPlacements(prev => ({ 
+          ...prev, 
+          [pageIdx]: { ...pos, width: newWidth, height: newHeight } 
+        }));
+      }
+    } else if (activeDraggingIdx === pageIdx) {
+      const x = Math.max(0, Math.min(localX - pos.width / 2, preview.width - pos.width));
+      const y = Math.max(0, Math.min(localY - pos.height / 2, preview.height - pos.height));
+      setPlacements(prev => ({ ...prev, [pageIdx]: { ...pos, x, y } }));
+    }
   };
 
   const handleSign = async () => {
     if (!file || !signatureUrl || selectedPages.length === 0) return;
     setIsProcessing(true);
     try {
-      const finalPlacements: SignaturePlacement[] = [];
+      const pdfDoc = await PDFDocument.load(file.data.slice(0));
+      const pages = pdfDoc.getPages();
+      const signatureImageBytes = await fetch(signatureUrl).then((res) => res.arrayBuffer());
+      const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
+
       for (const pIdx of selectedPages) {
         const sourceIdx = samePositionForAll ? selectedPages[0] : pIdx;
         const pos = placements[sourceIdx];
         const preview = pagePreviews[sourceIdx];
         if (!pos || !preview) continue;
 
-        const loadingTask = pdfjsLib.getDocument({ data: file.data.slice(0) });
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(pIdx + 1);
-        const { width: pdfWidth, height: pdfHeight } = page.getViewport({ scale: 1 });
+        const page = pages[pIdx];
+        // En pdf-lib, getSize() devuelve las dimensiones del área visual teniendo en cuenta la rotación
+        const { width: pdfWidth, height: pdfHeight } = page.getSize();
+        
+        // Obtenemos la rotación para ajustar si pdf-lib espera coordenadas relativas al "media box" original
+        const rotationAngle = page.getRotation().angle;
+        const isRotated = rotationAngle === 90 || rotationAngle === 270;
+
+        // Factores de escala entre la previsualización y el PDF real (visual)
         const scaleX = pdfWidth / preview.width;
         const scaleY = pdfHeight / preview.height;
 
-        finalPlacements.push({
-          pageIndex: pIdx,
-          x: pos.x * scaleX,
-          y: (preview.height - pos.y - pos.height) * scaleY,
-          width: pos.width * scaleX,
-          height: pos.height * scaleY
+        // Coordenadas en escala PDF
+        const pdfX = pos.x * scaleX;
+        const pdfY = pos.y * scaleY;
+        const pdfW = pos.width * scaleX;
+        const pdfH = pos.height * scaleY;
+
+        // IMPORTANTE: pdf-lib usa coordenadas Cartesianas (0,0 es abajo-izquierda).
+        // preview.height - pos.y nos da la distancia desde el fondo del PDF.
+        const finalX = pdfX;
+        const finalY = pdfHeight - pdfY - pdfH;
+
+        page.drawImage(signatureImage, {
+          x: finalX,
+          y: finalY,
+          width: pdfW,
+          height: pdfH
         });
       }
 
       let result: Uint8Array;
       if (downloadOnlySigned) {
-        const originalPdf = await PDFDocument.load(file.data);
         const newPdf = await PDFDocument.create();
-        const copiedPages = await newPdf.copyPages(originalPdf, selectedPages);
+        const copiedPages = await newPdf.copyPages(pdfDoc, selectedPages);
         copiedPages.forEach((page) => newPdf.addPage(page));
-        const signatureImageBytes = await fetch(signatureUrl).then((res) => res.arrayBuffer());
-        const signatureImage = await newPdf.embedPng(signatureImageBytes);
-        const pages = newPdf.getPages();
-        for (let i = 0; i < selectedPages.length; i++) {
-          const originalIdx = selectedPages[i];
-          const sourceIdx = samePositionForAll ? selectedPages[0] : originalIdx;
-          const pos = placements[sourceIdx];
-          const preview = pagePreviews[sourceIdx];
-          if (!pos || !preview) continue;
-          const page = pages[i];
-          const scaleX = page.getWidth() / preview.width;
-          const scaleY = page.getHeight() / preview.height;
-          page.drawImage(signatureImage, {
-            x: pos.x * scaleX, y: (preview.height - pos.y - pos.height) * scaleY,
-            width: pos.width * scaleX, height: pos.height * scaleY,
-          });
-        }
         result = await newPdf.save();
       } else {
-        result = await signPdf(file.data.slice(0), signatureUrl, finalPlacements);
+        result = await pdfDoc.save();
       }
+
       const blob = new Blob([result], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `firmado_${file.name}`;
       a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert('Error al firmar.');
+      alert('Error al firmar el documento.');
     } finally {
       setIsProcessing(false);
     }
@@ -304,7 +312,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
           {step === 'draw' && (
             <div className="p-6 md:p-12 flex flex-col items-center animate-in fade-in zoom-in duration-300">
               <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Dibuja tu firma</h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-8 text-center text-sm">Utiliza el ratón o el dedo para firmar. <br className="md:hidden"/> El fondo será siempre blanco en el documento final.</p>
+              <p className="text-slate-500 dark:text-slate-400 mb-8 text-center text-sm">Utiliza el ratón o el dedo para firmar.</p>
               
               <div className="relative bg-white border-4 border-slate-200 dark:border-slate-800 rounded-2xl shadow-inner overflow-hidden max-w-full transition-colors">
                 <canvas
@@ -325,7 +333,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                   onMouseUp={() => setIsDrawing(false)}
                   onMouseOut={() => setIsDrawing(false)}
                   onMouseMove={draw}
-                  // Fix: Property 'top' does not exist on type 'Touch'. Corrected to 'clientY - rect.top'.
                   onTouchStart={(e) => { 
                     setIsDrawing(true); 
                     if (canvasRef.current) {
@@ -437,19 +444,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
               </div>
 
               <div className="flex-grow overflow-y-auto p-4 md:p-8 bg-slate-100 dark:bg-slate-950 flex flex-col items-center gap-8 min-h-[400px] transition-colors">
-                <div className="max-w-md text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-2xl shadow-sm md:hidden mb-4 transition-colors">
-                  <p className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2 justify-center">
-                    <Maximize2 className="w-3 h-3" /> Arrastra para situar la firma
-                  </p>
-                </div>
-
-                {isProcessing && Object.keys(pagePreviews).length < (samePositionForAll ? 1 : selectedPages.length) && (
-                  <div className="flex flex-col items-center gap-4 py-20">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Cargando previsualización...</p>
-                  </div>
-                )}
-                
                 {(samePositionForAll ? [selectedPages[0]] : selectedPages).map((pIdx) => {
                   const preview = pagePreviews[pIdx];
                   const pos = placements[pIdx];
@@ -464,10 +458,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                       <div className="w-full flex justify-center items-start">
                         <div
                           ref={el => { containersRef.current[pIdx] = el; }}
-                          onMouseMove={(e) => handlePlacementMove(e, pIdx)}
-                          onMouseUp={() => setActiveDraggingIdx(null)}
-                          onTouchMove={(e) => handlePlacementMove(e, pIdx)}
-                          onTouchEnd={() => setActiveDraggingIdx(null)}
+                          onMouseMove={(e) => handlePointerMove(e, pIdx)}
+                          onMouseUp={() => { setActiveDraggingIdx(null); setActiveResizingIdx(null); }}
+                          onTouchMove={(e) => handlePointerMove(e, pIdx)}
+                          onTouchEnd={() => { setActiveDraggingIdx(null); setActiveResizingIdx(null); }}
                           className="relative shadow-2xl bg-white border-4 border-white select-none touch-none mx-auto overflow-hidden rounded-sm"
                           style={{ 
                             width: '100%',
@@ -479,9 +473,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                           
                           {signatureUrl && (
                             <div
-                              onMouseDown={(e) => { e.preventDefault(); setActiveDraggingIdx(pIdx); }}
-                              onTouchStart={() => setActiveDraggingIdx(pIdx)}
-                              className={`absolute cursor-move transition-transform ${activeDraggingIdx === pIdx ? 'ring-4 ring-blue-500/50 scale-105' : 'hover:ring-2 hover:ring-blue-400'}`}
+                              className={`absolute transition-all ${
+                                activeDraggingIdx === pIdx || activeResizingIdx === pIdx 
+                                  ? 'ring-4 ring-blue-500/50 scale-[1.02]' 
+                                  : 'hover:ring-2 hover:ring-blue-400'
+                              }`}
                               style={{ 
                                 left: `${(pos.x / preview.width) * 100}%`, 
                                 top: `${(pos.y / preview.height) * 100}%`, 
@@ -489,9 +485,22 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                                 height: `${(pos.height / preview.height) * 100}%` 
                               }}
                             >
-                              <img src={signatureUrl} alt="Signature" className="w-full h-full object-contain pointer-events-none" />
-                              <div className="absolute -top-3 -right-3 bg-blue-600 text-white rounded-full p-1.5 shadow-lg">
-                                <Move className="w-3 h-3" />
+                              {/* Área de arrastre */}
+                              <div 
+                                onMouseDown={(e) => { e.preventDefault(); setActiveDraggingIdx(pIdx); }}
+                                onTouchStart={() => setActiveDraggingIdx(pIdx)}
+                                className="w-full h-full cursor-move"
+                              >
+                                <img src={signatureUrl} alt="Signature" className="w-full h-full object-contain pointer-events-none" />
+                              </div>
+
+                              {/* Tirador de redimensionamiento con flecha diagonal */}
+                              <div 
+                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setActiveResizingIdx(pIdx); }}
+                                onTouchStart={(e) => { e.stopPropagation(); setActiveResizingIdx(pIdx); }}
+                                className="absolute -bottom-3 -right-3 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg cursor-nwse-resize z-20 active:scale-90 transition-transform hover:bg-blue-700"
+                              >
+                                <ArrowDownRight className="w-5 h-5" />
                               </div>
                             </div>
                           )}

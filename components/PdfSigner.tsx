@@ -49,7 +49,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
       const loadingTask = pdfjsLib.getDocument({ data: buffer.slice(0) });
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(pageNum);
-      // El viewport de PDF.js ya maneja la rotación automáticamente
+      // El viewport de PDF.js ya maneja la rotación visual del documento
       const viewport = page.getViewport({ scale: 1.5 });
       
       const canvas = document.createElement('canvas');
@@ -144,10 +144,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
   const goToPlacement = async () => {
     if (!file || selectedPages.length === 0) return;
     setIsProcessing(true);
-    const pagesToLoad = samePositionForAll ? [selectedPages[0]] : selectedPages;
-    for (const p of pagesToLoad) {
+    
+    // IMPORTANTE: Cargamos las previsualizaciones de TODAS las páginas seleccionadas
+    // para que al desmarcar "Misma posición" no aparezcan vacías.
+    for (const p of selectedPages) {
       const preview = await loadPagePreview(file.data, p + 1);
       if (preview && !placements[p]) {
+        // Inicializamos posición si no existe
         const initialWidth = preview.width * 0.25;
         const initialHeight = initialWidth * 0.5; 
         setPlacements(prev => ({
@@ -161,6 +164,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
         }));
       }
     }
+    
     setIsProcessing(false);
     setStep('placement');
   };
@@ -184,6 +188,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
     const localY = (clientY - rect.top) * scaleFactorY;
 
     if (activeResizingIdx === pageIdx) {
+      // Redimensionar manteniendo proporción
       const ratio = pos.width / pos.height;
       const newWidth = Math.max(40, localX - pos.x);
       const newHeight = newWidth / ratio;
@@ -195,6 +200,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
         }));
       }
     } else if (activeDraggingIdx === pageIdx) {
+      // Arrastrar
       const x = Math.max(0, Math.min(localX - pos.width / 2, preview.width - pos.width));
       const y = Math.max(0, Math.min(localY - pos.height / 2, preview.height - pos.height));
       setPlacements(prev => ({ ...prev, [pageIdx]: { ...pos, x, y } }));
@@ -217,33 +223,25 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
         if (!pos || !preview) continue;
 
         const page = pages[pIdx];
-        // En pdf-lib, getSize() devuelve las dimensiones del área visual teniendo en cuenta la rotación
+        // getSize() en pdf-lib ya devuelve las dimensiones visuales (corrigiendo rotación)
         const { width: pdfWidth, height: pdfHeight } = page.getSize();
         
-        // Obtenemos la rotación para ajustar si pdf-lib espera coordenadas relativas al "media box" original
-        const rotationAngle = page.getRotation().angle;
-        const isRotated = rotationAngle === 90 || rotationAngle === 270;
-
-        // Factores de escala entre la previsualización y el PDF real (visual)
+        // Factores de escala entre la previsualización del navegador y el PDF real
         const scaleX = pdfWidth / preview.width;
         const scaleY = pdfHeight / preview.height;
 
-        // Coordenadas en escala PDF
-        const pdfX = pos.x * scaleX;
-        const pdfY = pos.y * scaleY;
-        const pdfW = pos.width * scaleX;
-        const pdfH = pos.height * scaleY;
-
-        // IMPORTANTE: pdf-lib usa coordenadas Cartesianas (0,0 es abajo-izquierda).
-        // preview.height - pos.y nos da la distancia desde el fondo del PDF.
-        const finalX = pdfX;
-        const finalY = pdfHeight - pdfY - pdfH;
+        const finalWidth = pos.width * scaleX;
+        const finalHeight = pos.height * scaleY;
+        const finalX = pos.x * scaleX;
+        
+        // Inversión de eje Y: 0 es abajo en PDF
+        const finalY = pdfHeight - (pos.y * scaleY) - finalHeight;
 
         page.drawImage(signatureImage, {
           x: finalX,
           y: finalY,
-          width: pdfW,
-          height: pdfH
+          width: finalWidth,
+          height: finalHeight
         });
       }
 
@@ -333,6 +331,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ onBack }) => {
                   onMouseUp={() => setIsDrawing(false)}
                   onMouseOut={() => setIsDrawing(false)}
                   onMouseMove={draw}
+                  /* Fix: Using clientY and subtracting rect.top instead of non-existent .top property on touch event */
                   onTouchStart={(e) => { 
                     setIsDrawing(true); 
                     if (canvasRef.current) {
